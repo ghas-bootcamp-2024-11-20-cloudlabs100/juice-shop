@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2024 Bjoern Kimminich & the OWASP Juice Shop contributors.
  * SPDX-License-Identifier: MIT
  */
+import { URL } from 'url';
 
 import { type Request, type Response, type NextFunction } from 'express'
 import { UserModel } from '../models/user'
@@ -20,8 +21,10 @@ module.exports = function updateUserProfile () {
       UserModel.findByPk(loggedInUser.data.id).then((user: UserModel | null) => {
         if (user != null) {
           challengeUtils.solveIf(challenges.csrfChallenge, () => {
-            return ((req.headers.origin?.includes('://htmledit.squarefree.com')) ??
-              (req.headers.referer?.includes('://htmledit.squarefree.com'))) &&
+            const allowedHosts = ['htmledit.squarefree.com'];
+            const originHost = req.headers.origin ? new URL(req.headers.origin).host : '';
+            const refererHost = req.headers.referer ? new URL(req.headers.referer).host : '';
+            return (allowedHosts.includes(originHost) || allowedHosts.includes(refererHost)) &&
               req.body.username !== user.username
           })
           void user.update({ username: req.body.username }).then((savedUser: UserModel) => {

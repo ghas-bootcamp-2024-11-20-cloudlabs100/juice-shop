@@ -10,11 +10,14 @@ module.exports = function serveLogFiles () {
   return ({ params }: Request, res: Response, next: NextFunction) => {
     const file = params.file
 
-    if (!file.includes('/')) {
-      res.sendFile(path.resolve('logs/', file))
+    const safeRoot = path.resolve('logs/')
+    const resolvedPath = path.resolve(safeRoot, file)
+
+    if (resolvedPath.startsWith(safeRoot)) {
+      res.sendFile(resolvedPath)
     } else {
       res.status(403)
-      next(new Error('File names cannot contain forward slashes!'))
+      next(new Error('Access to the requested file is forbidden!'))
     }
   }
 }
