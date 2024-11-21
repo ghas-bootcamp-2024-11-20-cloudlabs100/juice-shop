@@ -3,7 +3,9 @@ import * as accuracy from '../lib/accuracy'
 
 const challengeUtils = require('../lib/challengeUtils')
 const fs = require('fs')
+const path = require('path')
 const yaml = require('js-yaml')
+const ROOT_DIR = path.resolve('./data/static/codefixes')
 
 const FixesDir = 'data/static/codefixes'
 
@@ -76,8 +78,13 @@ export const checkCorrectFix = () => async (req: Request<Record<string, unknown>
     })
   } else {
     let explanation
-    if (fs.existsSync('./data/static/codefixes/' + key + '.info.yml')) {
-      const codingChallengeInfos = yaml.load(fs.readFileSync('./data/static/codefixes/' + key + '.info.yml', 'utf8'))
+    const filePath = path.resolve(ROOT_DIR, key + '.info.yml')
+    if (!filePath.startsWith(ROOT_DIR)) {
+      res.status(403).json({ error: 'Access denied' })
+      return
+    }
+    if (fs.existsSync(filePath)) {
+      const codingChallengeInfos = yaml.load(fs.readFileSync(filePath, 'utf8'))
       const selectedFixInfo = codingChallengeInfos?.fixes.find(({ id }: { id: number }) => id === selectedFix + 1)
       if (selectedFixInfo?.explanation) explanation = res.__(selectedFixInfo.explanation)
     }
